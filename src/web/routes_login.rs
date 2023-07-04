@@ -1,6 +1,7 @@
 use axum::{routing::post, Json, Router};
 use serde::Deserialize;
 use serde_json::Value;
+use tower_cookies::{Cookie, Cookies};
 
 use crate::error::{Error, Result};
 
@@ -10,7 +11,7 @@ struct LoginPayload {
     pwd: String,
 }
 
-async fn api_login(payload: Json<LoginPayload>) -> Result<Json<Value>> {
+async fn api_login(cookies: Cookies, payload: Json<LoginPayload>) -> Result<Json<Value>> {
     println!("->> {:12} - api_login - {payload:?}", "HANDLER");
 
     // TODO: Implement real db/auth logic
@@ -18,6 +19,9 @@ async fn api_login(payload: Json<LoginPayload>) -> Result<Json<Value>> {
     if payload.username != "lemon" || payload.pwd != "melon" {
         return Err(Error::LoginFail);
     }
+
+    // TODO: Implement real token logic
+    cookies.add(Cookie::new(crate::web::AUTH_TOKEN, "user-1.exp.sign"));
 
     let body = Json(serde_json::json!({
         "result": {
