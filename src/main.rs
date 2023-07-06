@@ -57,18 +57,25 @@ async fn main_response_mapper(res: Response) -> Response {
 }
 
 #[tokio::main]
-async fn main() {
+async fn main() -> Result<()> {
+    let mc = model::ModelController::new().await?;
+
     let routes_all = Router::new()
         .merge(routes_hello())
         .merge(web::routes_login::routes())
+        .nest("/api", web::routes_tickets::router(mc.clone()))
         .layer(middleware::map_response(main_response_mapper))
         .layer(CookieManagerLayer::new())
         .fallback_service(router_static());
 
     let addr = SocketAddr::from(([127, 0, 0, 1], 3000));
+
     println!("->> LISTENING ON: {}", addr);
+
     axum::Server::bind(&addr)
         .serve(routes_all.into_make_service())
         .await
         .unwrap();
+
+    Ok(())
 }
